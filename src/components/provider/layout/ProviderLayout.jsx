@@ -1,19 +1,30 @@
-
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import ProviderSidebar from "../Sidebar";
 import ProviderHeader from "../Header";
 
 export default function ProviderLayout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <ProviderSidebar />
+    <div className="min-h-screen bg-gray-50">
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <ProviderHeader />
+      <ProviderSidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+      {/* Main Content */}
+      <div className="min-h-screen lg:pl-64">
+
+        <ProviderHeader
+          onMenuClick={() => setIsSidebarOpen(true)}
+        />
+
+        <main className="p-4 sm:p-6">
           <Outlet />
         </main>
+
       </div>
     </div>
   );

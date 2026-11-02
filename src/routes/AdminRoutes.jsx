@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import Login from "../pages/admin/Login";
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import ProviderManagement from "../pages/admin/ProviderManagement";
 
 const AdminRoutes = () => {
   return (
@@ -14,6 +15,15 @@ const AdminRoutes = () => {
           path="dashboard"
           element={<AdminDashboard />}
         />
+        <Route
+  path="/providers"
+  element={<ProviderManagement />}
+/>
+
+
+
+
+
         <Route
           path="*"
           element={<Navigate to="/admin/dashboard" replace />}

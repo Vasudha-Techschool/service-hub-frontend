@@ -5,6 +5,10 @@ import Login from "../pages/customer/Login";
 import CustomerDashboard from "../pages/customer/CustomerDashboard";
 import Register from "../pages/customer/Register";
 
+import CustomerSearchPage from "../pages/customer/SearchPage";
+import ProviderDetailsPage from "../pages/customer/ProviderDetailsPage";
+import MyBookings from "../pages/customer/Mybooking";
+
 const CustomerRoutes = () => {
   return (
     <Routes>
@@ -13,6 +17,17 @@ const CustomerRoutes = () => {
 
       <Route element={<ProtectedRoute allowedRole="customer" />}>
         <Route path="dashboard" element={<CustomerDashboard />} />
+        <Route path="services" element={<CustomerSearchPage />} />
+        <Route
+  path="requests"
+  element={<MyBookings />}
+/>
+<Route
+  path="providers/:id"
+  element={<ProviderDetailsPage />}
+/>
+
+
         <Route
           path="*"
           element={<Navigate to="/customer/login" replace />}

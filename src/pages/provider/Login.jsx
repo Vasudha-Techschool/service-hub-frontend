@@ -25,80 +25,87 @@ export default function ProviderLogin() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+ 
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      const response = await api.post(
-        "/api/auth/provider/login/",
-        {
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password,
-        }
-      );
+  try {
+    const response = await api.post("/api/auth/provider/login/", {
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password,
+    });
 
+    console.log("Login API response:", response.data);
 
-console.log("Login API response:", response.data);
+    // Get the user from the API response, NOT from the JWT payload.
+    const { access, refresh, user } = response.data;
 
-      const { access, refresh } = response.data;
+    if (!access || !refresh || !user) {
+      console.error("Missing login data:", response.data);
+      setError("The server did not return complete login data.");
+      return;
+    }
 
-      if (!access || !refresh) {
-        setError("The server did not return the required tokens.");
-        return;
-      }
+    console.log("Authenticated user:", user);
 
-      localStorage.setItem("accessToken", access);
-      localStorage.setItem("refreshToken", refresh);
+    if (user.role !== "provider") {
+      setError("This account is not authorized as a provider.");
+      return;
+    }
 
-      // Decode the role claim from the JWT access token.
-      const payload = JSON.parse(
-        atob(access.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))
-      );
+    // Decode JWT only if you need to inspect its claims.
+    const payload = JSON.parse(
+      atob(
+        access
+          .split(".")[1]
+          .replace(/-/g, "+")
+          .replace(/_/g, "/")
+      )
+    );
 
-      console.log("Decoded payload:", payload);
-console.log("User role:", payload.role);
+    console.log("JWT payload:", payload);
 
+    localStorage.setItem("accessToken", access);
+    localStorage.setItem("refreshToken", refresh);
 
+    // Save the complete user object returned by Django.
+    dispatch(
+      setCredentials({
+        accessToken: access,
+        refreshToken: refresh,
+        user: {
+          ...user,
+          email: user.email || formData.email.trim().toLowerCase(),
+        },
+      })
+    );
 
-      if (payload.role !== "provider") {
-        setError("This account is not authorized as a provider.");
-        return;
-      }
+    const destination = location.state?.from?.pathname;
 
-      // Update the shared Redux authentication state.
-      dispatch(
-        setCredentials({
-          accessToken: access,
-          refreshToken: refresh,
-          user: {
-            email: formData.email.trim().toLowerCase(),
-            role: payload.role,
-          },
-        })
-      );
-
-      const destination = location.state?.from?.pathname;
-
-      navigate(
-        destination?.startsWith("/provider/")
-          ? destination
-          : "/provider/dashboard",
-        { replace: true }
-      );
-    } catch (error) {
-    console.log("Login error response:", error.response?.data);
+    navigate(
+      destination?.startsWith("/provider/")
+        ? destination
+        : "/provider/dashboard",
+      { replace: true }
+    );
+  } catch (error) {
+    console.error("Login error:", error);
+    console.error("Login error response:", error.response?.data);
 
     setError(
-        error.response?.data?.detail ||
+      error.response?.data?.detail ||
         error.response?.data?.non_field_errors?.[0] ||
+        error.response?.data?.email?.[0] ||
+        error.response?.data?.password?.[0] ||
         "Login failed. Please check your credentials."
     );
-} finally {
-      setLoading(false);
-    }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">

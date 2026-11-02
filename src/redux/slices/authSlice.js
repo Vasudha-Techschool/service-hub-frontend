@@ -23,14 +23,34 @@ const authSlice = createSlice({
 
   reducers: {
     setCredentials: (state, action) => {
-      state.accessToken = action.payload.accessToken;
-      state.refreshToken = action.payload.refreshToken;
-      state.user = action.payload.user;
+      const { accessToken, refreshToken, user } = action.payload;
+
+      state.accessToken = accessToken;
+      state.refreshToken = refreshToken;
+      state.user = user;
       state.isAuthChecked = true;
+
+      if (accessToken) {
+        localStorage.setItem("accessToken", accessToken);
+      }
+
+      if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+      }
+
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
     },
 
     setAccessToken: (state, action) => {
       state.accessToken = action.payload;
+
+      if (action.payload) {
+        localStorage.setItem("accessToken", action.payload);
+      } else {
+        localStorage.removeItem("accessToken");
+      }
     },
 
     setAuthChecked: (state, action) => {
@@ -42,6 +62,10 @@ const authSlice = createSlice({
       state.refreshToken = null;
       state.user = null;
       state.isAuthChecked = true;
+
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
     },
   },
 });

@@ -30,74 +30,73 @@ export default function ProviderLogin() {
     setError("");
     setLoading(true);
 
-    try {
-      const response = await api.post(
-        "/api/auth/customer/login/",
-        {
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password,
-        }
-      );
-
-
-console.log("Login API response:", response.data);
-
-      const { access, refresh } = response.data;
-
-      if (!access || !refresh) {
-        setError("The server did not return the required tokens.");
-        return;
-      }
-
-      localStorage.setItem("accessToken", access);
-      localStorage.setItem("refreshToken", refresh);
-
-      // Decode the role claim from the JWT access token.
-      const payload = JSON.parse(
-        atob(access.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))
-      );
-
-      console.log("Decoded payload:", payload);
-console.log("User role:", payload.role);
-
-
-
-      if (payload.role !== "customer") {
-        setError("This account is not authorized as a Customer.");
-        return;
-      }
-
-      // Update the shared Redux authentication state.
-      dispatch(
-        setCredentials({
-          accessToken: access,
-          refreshToken: refresh,
-          user: {
-            email: formData.email.trim().toLowerCase(),
-            role: payload.role,
-          },
-        })
-      );
-
-      const destination = location.state?.from?.pathname;
-
-      navigate(
-        destination?.startsWith("/customer/")
-          ? destination
-          : "/customer/dashboard",
-        { replace: true }
-      );
-    } catch (error) {
-    console.log("Login error response:", error.response?.data);
-
-    setError(
-        error.response?.data?.detail ||
-        error.response?.data?.non_field_errors?.[0] ||
-        "Login failed. Please check your credentials."
-    );
-} finally {
-      setLoading(false);
+   
+try {
+  const response = await api.post(
+    "/api/auth/customer/login/",
+    {
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password,
     }
+  );
+
+  console.log("Login API response:", response.data);
+
+  const { access, refresh, user } = response.data;
+
+  if (!access || !refresh) {
+    setError("The server did not return the required tokens.");
+    return;
+  }
+
+  // Decode JWT payload
+  const payload = JSON.parse(
+    atob(access.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))
+  );
+
+  console.log("Decoded payload:", payload);
+
+  if (payload.role !== "customer") {
+    setError("This account is not authorized as a Customer.");
+    return;
+  }
+
+  // Use the user object if the API returns it.
+  // Otherwise, use only fields actually available in the token.
+  const loggedInUser = user || {
+    email: formData.email.trim().toLowerCase(),
+    role: payload.role,
+    full_name: payload.full_name || payload.name || "",
+  };
+
+  dispatch(
+    setCredentials({
+      accessToken: access,
+      refreshToken: refresh,
+      user: loggedInUser,
+    })
+  );
+
+  const destination = location.state?.from?.pathname;
+
+  navigate(
+    destination?.startsWith("/customer/")
+      ? destination
+      : "/customer/dashboard",
+    { replace: true }
+  );
+} catch (error) {
+  console.log("Login error response:", error.response?.data);
+
+  setError(
+    error.response?.data?.detail ||
+      error.response?.data?.non_field_errors?.[0] ||
+      "Login failed. Please check your credentials."
+  );
+} finally {
+  setLoading(false);
+}
+
   };
 
   return (
@@ -183,7 +182,7 @@ console.log("User role:", payload.role);
             to="/customer/register"
             className="font-semibold text-blue-600 hover:text-blue-700"
           >
-            Register as a provider
+            Register as a customer
           </Link>
         </p>
       </div>
