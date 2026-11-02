@@ -97,7 +97,7 @@ export default function RecentRequests({
                     </p>
 
                     <p className="mt-1 text-xs text-green-700">
-                      {request.service_category || "Service"}
+                      {request.provider_category || request.service_category || "Service"}
                     </p>
                   </td>
 

@@ -8,6 +8,8 @@ import ProviderDashboard from "../pages/provider/ProviderDashboard";
 import ProviderProfile from "../pages/provider/ProviderProfile";
 
 import ProviderLayout from "../components/provider/layout/ProviderLayout";
+import ProviderRequests from "../pages/provider/ProviderRequest";
+import ProviderRequestDetails from "../pages/provider/ProviderRequestDetails";
 
 const ProviderRoutes = () => {
   return (
@@ -33,6 +35,13 @@ const ProviderRoutes = () => {
             path="profile"
             element={<ProviderProfile />}
           />
+
+          <Route
+              path="bookings"
+              element={<ProviderRequests />}
+            />
+
+            <Route path="bookings/:id" element={<ProviderRequestDetails />} />
 
           <Route
             path="*"
