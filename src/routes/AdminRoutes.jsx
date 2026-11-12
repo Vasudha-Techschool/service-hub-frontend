@@ -4,6 +4,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import Login from "../pages/admin/Login";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import ProviderManagement from "../pages/admin/ProviderManagement";
+import AdminComplaints from "../pages/admin/AdminComplaints";
+import AdminNotifications from "../pages/admin/AdminNotifications";
 
 const AdminRoutes = () => {
   return (
@@ -16,9 +18,17 @@ const AdminRoutes = () => {
           element={<AdminDashboard />}
         />
         <Route
-  path="/providers"
-  element={<ProviderManagement />}
-/>
+              path="/providers"
+              element={<ProviderManagement />}
+            />
+        <Route
+              path="/complaints"
+              element={<AdminComplaints />}
+            />
+            <Route
+              path="/notifications"
+              element={<AdminNotifications />}
+            />
 
 
 

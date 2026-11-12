@@ -1,0 +1,1 @@
+// Global Cypress configuration can be added here later.

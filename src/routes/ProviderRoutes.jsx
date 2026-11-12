@@ -11,6 +11,9 @@ import ProviderLayout from "../components/provider/layout/ProviderLayout";
 import ProviderRequests from "../pages/provider/ProviderRequest";
 import ProviderRequestDetails from "../pages/provider/ProviderRequestDetails";
 
+import MyReviews from "../pages/provider/MyReview";
+
+
 const ProviderRoutes = () => {
   return (
     <Routes>
@@ -43,10 +46,16 @@ const ProviderRoutes = () => {
 
             <Route path="bookings/:id" element={<ProviderRequestDetails />} />
 
+             <Route path="reviews" element={<MyReviews />} />
+
+
+
           <Route
             path="*"
             element={<Navigate to="/provider/dashboard" replace />}
           />
+
+
         </Route>
       </Route>
     </Routes>

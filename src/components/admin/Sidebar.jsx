@@ -15,6 +15,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   House,
+  Bell,
 } from "lucide-react";
 
 const sidebarSections = [
@@ -22,6 +23,7 @@ const sidebarSections = [
     title: "Workspace",
     items: [
       { label: "Overview", path: "/admin/dashboard", icon: LayoutDashboard },
+      { label: "Notifications", path: "/admin/notifications", icon: Bell },
       { label: "Customers", path: "/admin/customers", icon: Users },
       {
         label: "Service Providers",

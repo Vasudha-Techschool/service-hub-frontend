@@ -4,10 +4,11 @@ import ProtectedRoute from "./ProtectedRoute";
 import Login from "../pages/customer/Login";
 import CustomerDashboard from "../pages/customer/CustomerDashboard";
 import Register from "../pages/customer/Register";
-
+import api from "../api/axios";
 import CustomerSearchPage from "../pages/customer/SearchPage";
 import ProviderDetailsPage from "../pages/customer/ProviderDetailsPage";
 import MyBookings from "../pages/customer/Mybooking";
+import CustomerComplaints from "../pages/customer/CustomerComplaints";
 
 const CustomerRoutes = () => {
   return (
@@ -25,6 +26,11 @@ const CustomerRoutes = () => {
 <Route
   path="providers/:id"
   element={<ProviderDetailsPage />}
+/>
+
+<Route
+  path="complaints"
+  element={<CustomerComplaints api={api} />}
 />
 
 

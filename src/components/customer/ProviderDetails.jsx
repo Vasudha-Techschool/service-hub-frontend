@@ -13,6 +13,7 @@ import {
   UserRound,
   Wrench,
   X,
+  Star
 } from "lucide-react";
 import api from "../../api/axios";
 
@@ -49,6 +50,10 @@ const ProviderDetails = () => {
   const [requestMessageType, setRequestMessageType] = useState("error");
   const [requestSent, setRequestSent] = useState(false);
   const [sendingRequest, setSendingRequest] = useState(false);
+ // provider review from other users
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState("");
 
   // Photon location autocomplete state
   const [locationSuggestions, setLocationSuggestions] = useState([]);
@@ -59,7 +64,7 @@ const ProviderDetails = () => {
   const [selectedLocation, setSelectedLocation] = useState(false);
   const locationRequestRef = useRef(0);
 
-  // Fetch provider details
+  // useEffect for Fetch provider details 
   useEffect(() => {
     let isMounted = true;
 
@@ -101,6 +106,51 @@ const ProviderDetails = () => {
       isMounted = false;
     };
   }, [id]);
+
+
+
+  //useEffect for Fetch public reviews for this provider
+useEffect(() => {
+  let isMounted = true;
+
+  const fetchProviderReviews = async () => {
+    if (!provider?.id) return;
+
+    try {
+      setReviewsLoading(true);
+      setReviewsError("");
+
+      const response = await api.get(
+        `/api/feedback/providers/${provider.id}/reviews/`
+      );
+
+      if (isMounted) {
+        // Supports both normal list responses and paginated DRF responses.
+        const reviewData = Array.isArray(response.data)
+          ? response.data
+          : response.data.results || [];
+
+        setReviews(reviewData);
+      }
+    } catch (err) {
+      console.error("Failed to fetch provider reviews:", err);
+
+      if (isMounted) {
+        setReviewsError("Unable to load customer reviews.");
+      }
+    } finally {
+      if (isMounted) {
+        setReviewsLoading(false);
+      }
+    }
+  };
+
+  fetchProviderReviews();
+
+  return () => {
+    isMounted = false;
+  };
+}, [provider?.id]);
 
   // Check whether this customer already has an active request for this provider
   useEffect(() => {
@@ -369,6 +419,20 @@ const ProviderDetails = () => {
     provider.verification_status === "approved" ||
     provider.verification_status === "verified";
 
+// Review detials data
+    const totalReviews = reviews.length;
+    const averageRating =
+      totalReviews > 0
+        ? (
+            reviews.reduce(
+              (total, review) => total + Number(review.rating || 0),
+              0
+            ) / totalReviews
+          ).toFixed(1)
+        : "0.0";
+
+        console.log("REVIEW : ",reviews)
+
   return (
     <div className="min-h-screen bg-slate-50">
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
@@ -619,6 +683,170 @@ const ProviderDetails = () => {
             </div>
           </section>
         </div>
+
+        {/* Review display div  */}
+
+        {/* Customer Reviews */}
+<section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+  {/* Section heading */}
+  <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 className="text-xl font-semibold text-slate-900">
+        Customer Reviews
+      </h2>
+
+      <p className="mt-1 text-sm text-slate-500">
+        See what other customers say about {providerName}.
+      </p>
+    </div>
+
+    {/* Overall rating */}
+    {!reviewsLoading && !reviewsError && totalReviews > 0 && (
+      <div className="flex items-center gap-3 rounded-xl bg-emerald-50 px-5 py-3">
+        <div>
+          <p className="text-3xl font-bold text-slate-900">
+            {averageRating}
+          </p>
+
+          <div className="mt-1 flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                size={15}
+                className={
+                  star <= Math.round(Number(averageRating))
+                    ? "fill-amber-400 text-amber-400"
+                    : "text-slate-300"
+                }
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="border-l border-emerald-200 pl-3">
+          <p className="text-sm font-semibold text-slate-800">
+            {totalReviews} {totalReviews === 1 ? "Review" : "Reviews"}
+          </p>
+          <p className="text-xs text-slate-500">
+            Customer rating
+          </p>
+        </div>
+      </div>
+    )}
+  </div>
+
+  {/* Loading */}
+  {reviewsLoading && (
+    <div className="mt-6 space-y-4">
+      {[1, 2].map((item) => (
+        <div
+          key={item}
+          className="animate-pulse rounded-xl border border-slate-100 p-5"
+        >
+          <div className="h-4 w-32 rounded bg-slate-200" />
+          <div className="mt-3 h-3 w-24 rounded bg-slate-100" />
+          <div className="mt-4 h-3 w-full rounded bg-slate-100" />
+        </div>
+      ))}
+    </div>
+  )}
+
+  {/* Error */}
+  {!reviewsLoading && reviewsError && (
+    <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+      {reviewsError}
+    </p>
+  )}
+
+  {/* Empty state */}
+  {!reviewsLoading && !reviewsError && totalReviews === 0 && (
+    <div className="mt-6 rounded-xl border border-dashed border-slate-200 px-5 py-10 text-center">
+      <Star
+        size={30}
+        className="mx-auto text-slate-300"
+      />
+
+      <h3 className="mt-3 font-semibold text-slate-800">
+        No Reviews Yet
+      </h3>
+
+      <p className="mt-1 text-sm text-slate-500">
+        This provider has not received any customer reviews yet.
+      </p>
+    </div>
+  )}
+
+  {/* Review list */}
+  {!reviewsLoading && !reviewsError && totalReviews > 0 && (
+    <div className="mt-6 divide-y divide-slate-100">
+      {reviews.map((review) => (
+        <article
+          key={review.id}
+          className="py-5 first:pt-0 last:pb-0"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 font-semibold text-emerald-700">
+                {(review.customer_name || "C")
+                  .charAt(0)
+                  .toUpperCase()}
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {review.customer_name || "Customer"}
+                </p>
+
+
+                
+
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {review.created_at
+                    ? new Date(review.created_at).toLocaleDateString(
+                        "en-IN",
+                        {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )
+                    : ""}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  size={15}
+                  className={
+                    star <= Number(review.rating)
+                      ? "fill-amber-400 text-amber-400"
+                      : "text-slate-300"
+                  }
+                />
+              ))}       
+            </div>
+
+            <div>
+              <p className="truncate text-sm font-semibold text-slate-900 capitalize">
+                {review.sentiment || " "}
+              </p>
+              </div>
+            
+          </div>
+
+          {review.comment && (
+            <p className="mt-4 whitespace-pre-line text-sm leading-6 text-slate-600">
+              {review.comment}
+            </p>
+          )}
+        </article>
+      ))}
+    </div>
+  )}
+</section>
 
         <p className="mt-8 text-center text-xs text-slate-400">
           Service Hub · Connecting you with local service professionals

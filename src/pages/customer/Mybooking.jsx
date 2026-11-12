@@ -10,6 +10,8 @@ import ServiceRequestDetails from "../../components/customer/ServiceRequestDetai
 
 import api from "../../api/axios";
 
+import { createReview } from "../../services/customerService";
+
 const MyBookings = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -21,10 +23,40 @@ const MyBookings = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
 
+  //RevieStates
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
 
 
 
 const [cancelling, setCancelling] = useState(false);
+
+const handleSubmitComplaint = async (formData) => {
+  try {
+    await api.post("api/feedback/complaints/create/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    // Show your success message here
+    return true;
+  } catch (error) {
+    console.error("Complaint submission failed:", error.response?.data || error);
+    // Show your error message here
+    return false;
+  }
+};
+const handleSubmitReview = async (reviewData) => {
+  try {
+    setReviewSubmitting(true);
+
+    await createReview(reviewData);
+
+  } finally {
+    setReviewSubmitting(false);
+  }
+};
 
 const handleCancelRequest = async (requestId) => {
   const confirmed = window.confirm(
@@ -88,6 +120,30 @@ const handleCancelRequest = async (requestId) => {
       setLoading(false);
     }
   };
+
+  const [completionLoading, setCompletionLoading] = useState(false);
+
+const handleRequestCompletion = async (requestId) => {
+  try {
+    setCompletionLoading(true);
+
+    await api.patch(
+      `/api/services/customer/requests/${requestId}/request-completion/`
+    );
+
+    // Refresh the selected request from the backend
+    await fetchRequestDetails(requestId);
+
+    toast.success("Completion request sent to the provider.");
+  } catch (error) {
+    toast.error(
+      error.response?.data?.error ||
+      "Unable to submit completion request."
+    );
+  } finally {
+    setCompletionLoading(false);
+  }
+};
 
   // Fetch selected request details
   const fetchRequestDetails = async (requestId) => {
@@ -155,7 +211,7 @@ const handleCancelRequest = async (requestId) => {
               </p>
             </div>
 
-            <button
+            {/* <button
               onClick={fetchRequests}
               disabled={loading}
               className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-green-500 hover:text-green-700 disabled:opacity-50"
@@ -165,7 +221,7 @@ const handleCancelRequest = async (requestId) => {
                 className={loading ? "animate-spin" : ""}
               />
               Refresh
-            </button>
+            </button> */}
           </div>
 
           {/* Error Message */}
@@ -229,11 +285,17 @@ const handleCancelRequest = async (requestId) => {
             {/* Right: Selected Request Details */}
             <div className="min-w-0 xl:col-span-7">
               <ServiceRequestDetails
-                request={selectedRequest}
-                loading={detailLoading}
-                onCancel={handleCancelRequest}
-                cancelling={cancelling}
-              />
+  request={selectedRequest}
+  loading={loading}
+  onCancel={handleCancelRequest}
+  cancelling={cancelling}
+  onRequestCompletion={handleRequestCompletion}
+  completionLoading={completionLoading}
+  onSubmitReview={handleSubmitReview}
+  reviewSubmitting={reviewSubmitting}
+  hasReviewed={Boolean(selectedRequest?.has_reviewed)}
+  onSubmitComplaint={handleSubmitComplaint}
+/>
             </div>
 
           </div>

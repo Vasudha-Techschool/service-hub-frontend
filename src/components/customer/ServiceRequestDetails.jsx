@@ -1,21 +1,54 @@
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   MapPin,
+  Star,
+  CheckCircle,
   Phone,
   CalendarDays,
   UserRound,
   ClipboardList,
   Wrench,
-  Clock,MessageCircle
+  Clock,
+  MessageCircle,
 } from "lucide-react";
+
+import ReviewModal from "./ReviewModal";
+import ComplaintModal from "./ComplaintModal";
 
 const ServiceRequestDetails = ({
   request,
   loading,
   onCancel,
-  cancelling
-}) =>{
+  cancelling,
+  onRequestCompletion,
+  completionLoading,
+  onSubmitReview,
+  reviewSubmitting = false,
+  hasReviewed = false,
+  onSubmitComplaint,
+  complaintSubmitting = false,
+}) => {
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [showComplaintModal, setShowComplaintModal] = useState(false);
+  
+  useEffect(() => {
+  setReviewSubmitted(false);
+  setShowReviewModal(false);
+  setShowComplaintModal(false);
+}, [request?.id]);
+
+const handleComplaintSubmit = async (formData) => {
+  const success = await onSubmitComplaint(formData);
+
+  if (success !== false) {
+    setShowComplaintModal(false);
+  }
+};
+
+  const isReviewed = hasReviewed || reviewSubmitted;
+
+  // Keep the rest of your component here...
   if (loading) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
@@ -52,16 +85,134 @@ const ServiceRequestDetails = ({
     });
   };
 
+// For Review button display
+  const handleReviewSubmit = async (reviewData) => {
+  await onSubmitReview(reviewData);
+
+  setReviewSubmitted(true);
+  setShowReviewModal(false);
+};
+
   const statusStyles = {
-    pending: "bg-amber-50 text-amber-700",
-    accepted: "bg-blue-50 text-blue-700",
-    rejected: "bg-red-50 text-red-700",
-    cancelled: "bg-gray-100 text-gray-600",
-    completed: "bg-emerald-50 text-emerald-700",
-  };
+  pending: "bg-amber-50 text-amber-700",
+  accepted: "bg-blue-50 text-blue-700",
+  rejected: "bg-red-50 text-red-700",
+  cancelled: "bg-gray-100 text-gray-600",
+  in_progress: "bg-indigo-50 text-indigo-700",
+  awaiting_provider_confirmation: "bg-purple-50 text-purple-700",
+  completed: "bg-emerald-50 text-emerald-700",
+};
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
+
+{/* Completion Action */}
+{["accepted", "in_progress"].includes(request.status) && (
+  <div className="mt-5 rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h3 className="text-sm font-semibold text-emerald-800">
+          Is the service work completed?
+        </h3>
+
+        <p className="mt-1 text-xs text-emerald-700">
+          Notify the provider that the work is finished.
+          The provider will verify and confirm completion.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onRequestCompletion(request.id)}
+        disabled={completionLoading}
+        className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {completionLoading
+          ? "Submitting..."
+          : "Mark Work as Completed"}
+      </button>
+    </div>
+  </div>
+)}
+
+{request.status === "awaiting_provider_confirmation" && (
+  <div className="mt-5 rounded-lg border border-purple-100 bg-purple-50 p-4">
+    <p className="text-sm font-semibold text-purple-800">
+      Waiting for Provider Confirmation
+    </p>
+    <p className="mt-1 text-xs text-purple-700">
+      Your completion request has been submitted. The provider
+      has been notified by email and must confirm the work.
+    </p>
+  </div>
+)}
+
+
+{/* Customer Complaint Action */}
+
+{["accepted", "completed"].includes(request.status) && (
+  <div className="mb-5 rounded-lg border border-red-100 bg-red-50 p-4">
+
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+      <div>
+        <h3 className="text-sm font-semibold text-red-800">
+          Do you have any complaints?
+        </h3>
+
+        <p className="mt-1 text-xs text-red-700">
+          If you experienced any issues with this service,
+          you can submit a complaint for admin review.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowComplaintModal(true)}
+        className="shrink-0 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
+      >
+        Raise a Complaint
+      </button>
+
+    </div>
+  </div>
+)}
+
+
+{/* Customer Review Action */}
+{request.status === "completed" && (
+  <div className="mb-5 rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h3 className="text-sm font-semibold text-emerald-800">
+          Share Your Experience
+        </h3>
+
+        <p className="mt-1 text-xs text-emerald-700">
+          Your service is completed. Rate the provider and
+          help other customers make better decisions.
+        </p>
+      </div>
+
+      {isReviewed ? (
+        <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
+          <CheckCircle size={18} />
+          Review Submitted
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowReviewModal(true)}
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+        >
+          <Star size={16} />
+          Write a Review
+        </button>
+      )}
+    </div>
+  </div>
+)}
+
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-5">
@@ -85,7 +236,8 @@ const ServiceRequestDetails = ({
     {request.status}
   </span>
 
-  {request.status === "pending" && (
+  {["pending", "accepted"].includes(request.status) &&  (
+
     <button
       type="button"
       onClick={() => onCancel(request.id)}
@@ -208,6 +360,25 @@ const ServiceRequestDetails = ({
 
         </div>
       </div>
+      {/* modal form for complaint submitting */}
+      {showComplaintModal && (
+  <ComplaintModal
+    request={request}
+    onClose={() => setShowComplaintModal(false)}
+    onSubmit={handleComplaintSubmit}
+    submitting={complaintSubmitting}
+  />
+)}
+
+{/* modal form for review submitting */}
+      {showReviewModal && (
+  <ReviewModal
+    request={request}
+    onClose={() => setShowReviewModal(false)}
+    onSubmit={handleReviewSubmit}
+    submitting={reviewSubmitting}
+  />
+)}
 
     </div>
   );

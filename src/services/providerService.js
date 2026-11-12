@@ -26,3 +26,23 @@ export const updateProviderRequestStatus = async (id, action) => {
   return response.data;
 };
 
+// Get reviews received by a provider
+export const getProviderReviews = async (providerId) => {
+  const response = await api.get(
+    `/api/feedback/providers/${providerId}/reviews/`
+  );
+
+  return response.data;
+};
+
+// Get reviews received by the logged-in provider
+export const getMyProviderReviews = async () => {
+  const response = await api.get(
+    "/api/feedback/my-provider-reviews/"
+  );
+
+  return response.data;
+};
+
+
+
