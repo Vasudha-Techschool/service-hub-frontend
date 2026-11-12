@@ -44,5 +44,24 @@ export const getMyProviderReviews = async () => {
   return response.data;
 };
 
+export const getProviderNotifications = async () => {
+  const response = await api.get("/api/notifications/");
+  return response.data;
+};
+
+export const markProviderNotificationRead = async (id) => {
+  const response = await api.post(
+    `/api/notifications/${id}/mark-read/`
+  );
+  return response.data;
+};
+
+export const getProviderUnreadNotificationCount = async () => {
+  const response = await api.get(
+    "/api/notifications/unread-count/"
+  );
+  return response.data;
+};
+
 
 

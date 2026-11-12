@@ -12,6 +12,7 @@ import ProviderRequests from "../pages/provider/ProviderRequest";
 import ProviderRequestDetails from "../pages/provider/ProviderRequestDetails";
 
 import MyReviews from "../pages/provider/MyReview";
+import ProviderNotifications from "../pages/provider/Providernotifications";
 
 
 const ProviderRoutes = () => {
@@ -47,6 +48,10 @@ const ProviderRoutes = () => {
             <Route path="bookings/:id" element={<ProviderRequestDetails />} />
 
              <Route path="reviews" element={<MyReviews />} />
+             <Route
+  path="notifications"
+  element={<ProviderNotifications />}
+/>
 
 
 

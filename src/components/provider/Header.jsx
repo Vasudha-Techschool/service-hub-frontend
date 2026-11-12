@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -10,6 +10,7 @@ import {
   Home,
 } from "lucide-react";
 import { useSelector } from "react-redux";
+import { getProviderUnreadNotificationCount } from "../../services/providerService";
 
 const pageNames = {
   dashboard: "Dashboard",
@@ -57,6 +58,43 @@ export default function ProviderHeader({ onMenuClick }) {
       currentRoute
         .replace(/-/g, " ")
         .replace(/\b\w/g, (char) => char.toUpperCase());
+const [unreadCount, setUnreadCount] = useState(0);
+
+
+const fetchUnreadCount = useCallback(async () => {
+  try {
+    const data = await getProviderUnreadNotificationCount();
+
+    setUnreadCount(
+      Number(data.unread_count ?? data.count ?? 0)
+    );
+  } catch (error) {
+    console.error("Failed to fetch unread notifications:", error);
+  }
+}, []);
+
+useEffect(() => {
+  fetchUnreadCount();
+}, [fetchUnreadCount, location.pathname]);
+
+// Listen for notifications marked as read
+useEffect(() => {
+  const handleNotificationUpdate = () => {
+    fetchUnreadCount();
+  };
+
+  window.addEventListener(
+    "provider-notifications-updated",
+    handleNotificationUpdate
+  );
+
+  return () => {
+    window.removeEventListener(
+      "provider-notifications-updated",
+      handleNotificationUpdate
+    );
+  };
+}, [fetchUnreadCount]);
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -156,15 +194,19 @@ export default function ProviderHeader({ onMenuClick }) {
         {/* Right: Notifications and Profile */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-3">
           <button
-            type="button"
-            onClick={() =>
-              navigate("/provider/notifications")
-            }
-            aria-label="View notifications"
-            className="relative rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 hover:text-green-700"
-          >
-            <Bell size={21} />
-          </button>
+  type="button"
+  onClick={() => navigate("/provider/notifications")}
+  aria-label={`View notifications. ${unreadCount} unread`}
+  className="relative rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 hover:text-green-700"
+>
+  <Bell size={21} />
+
+  {unreadCount > 0 && (
+    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+      {unreadCount > 99 ? "99+" : unreadCount}
+    </span>
+  )}
+</button>
 
           <button
             type="button"
