@@ -1,4 +1,3 @@
-
 import { Bell, Clock } from "lucide-react";
 
 export default function NotificationCard({

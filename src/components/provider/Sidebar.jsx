@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   LogOut,
   Wrench,
+  FileWarning
 } from "lucide-react";
 
 const menuItems = [
@@ -49,6 +50,11 @@ const menuItems = [
     label: "My Reviews",
     path: "/provider/reviews",
     icon: Star,
+  },
+  {
+    label: "My Complaints",
+    path: "/provider/complaints",
+    icon: FileWarning,
   },
 ];
 

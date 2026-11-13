@@ -63,5 +63,22 @@ export const getProviderUnreadNotificationCount = async () => {
   return response.data;
 };
 
+// Fetch provider complaints
+export const getProviderComplaints = async () => {
+  const response = await api.get(
+    "/api/feedback/provider/complaints/"
+  );
 
+  return response.data;
+};
+
+// Submit provider complaint response
+export const respondToComplaint = async (complaintId, data) => {
+  const response = await api.post(
+    `/api/feedback/provider/complaints/${complaintId}/respond/`,
+    data
+  );
+
+  return response.data;
+};
 

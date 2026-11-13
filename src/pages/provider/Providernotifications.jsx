@@ -10,7 +10,8 @@ import {
 
 import NotificationStats from "../../components/provider/notifications/NotificationStats";
 import NotificationCard from "../../components/provider/notifications/NotificationCard";
-import NotificationFilter from "../../components/provider/notifications/NotificationFilter"
+import NotificationFilter from "../../components/provider/notifications/NotificationFilter";
+
 const notificationTypes = [
   { value: "new_request", label: "New Service Request" },
   { value: "request_cancelled", label: "Request Cancelled" },
@@ -33,6 +34,8 @@ const formatDate = (date) => {
 };
 
 export default function ProviderNotifications() {
+  const navigate = useNavigate();
+
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -41,11 +44,7 @@ export default function ProviderNotifications() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  const navigate = useNavigate();
-
- 
-
-  // Fetch provider notifications
+  // Fetch notifications
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
@@ -53,15 +52,13 @@ export default function ProviderNotifications() {
 
       const data = await getProviderNotifications();
 
-console.log("Provider notifications API response:", data);
+      const notificationList = Array.isArray(data)
+        ? data
+        : data.results || [];
 
-setNotifications(
-  Array.isArray(data) ? data : data.results || []
-);
+      console.log("Provider notifications:", notificationList);
 
-      setNotifications(
-        Array.isArray(data) ? data : data.results || []
-      );
+      setNotifications(notificationList);
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
       setError("Unable to load notifications. Please try again.");
@@ -74,7 +71,7 @@ setNotifications(
     fetchNotifications();
   }, [fetchNotifications]);
 
-  // Statistics
+  // Notification statistics
   const unreadCount = notifications.filter(
     (notification) => !notification.is_read
   ).length;
@@ -104,22 +101,21 @@ setNotifications(
         return matchesSearch && matchesStatus && matchesType;
       })
       .sort((a, b) => {
-        // Unread notifications first
         if (a.is_read !== b.is_read) {
           return Number(a.is_read) - Number(b.is_read);
         }
 
-        // Newest first within each group
-        return (
-          new Date(b.created_at) - new Date(a.created_at)
-        );
+        return new Date(b.created_at) - new Date(a.created_at);
       });
   }, [notifications, search, statusFilter, typeFilter]);
 
   // Handle notification click
   const handleNotificationClick = async (notification) => {
-    try {
-      if (!notification.is_read) {
+    console.log("Notification clicked:", notification);
+
+    // Mark notification as read
+    if (!notification.is_read) {
+      try {
         await markProviderNotificationRead(notification.id);
 
         setNotifications((previous) =>
@@ -129,25 +125,56 @@ setNotifications(
               : item
           )
         );
-         window.dispatchEvent(
-  new Event("provider-notifications-updated")
-);
-      }
 
-      if (notification.service_request) {
-        navigate(
-          `/provider/bookings/${notification.service_request}`
+        window.dispatchEvent(
+          new Event("provider-notifications-updated")
         );
+      } catch (err) {
+        console.error("Failed to mark notification as read:", err);
+      }
+    }
+
+    // Get notification type
+    const type = notification.notification_type;
+
+    console.log("Notification type:", type);
+
+    // Explanation requested: navigate to complaints page
+    if (type === "explanation_requested") {
+      const complaintId =
+        notification.complaint?.id ?? notification.complaint;
+
+      console.log("Explanation requested. Complaint ID:", complaintId);
+
+      if (complaintId) {
+        navigate(
+          `/provider/complaints?complaint=${complaintId}`
+        );
+      } else {
+        console.error(
+          "Complaint ID is missing from notification:",
+          notification
+        );
+
+        navigate("/provider/complaints");
       }
 
-      // Complaint navigation will be added
-      // after implementing Provider Complaints page.
-    } catch (err) {
-      console.error(
-        "Failed to mark notification as read:",
-        err
-      );
+      return;
     }
+
+    // Service request notifications
+    const serviceRequestId =
+      notification.service_request?.id ??
+      notification.service_request;
+
+    if (serviceRequestId) {
+      console.log("Navigating to service request:", serviceRequestId);
+
+      navigate(`/provider/bookings/${serviceRequestId}`);
+      return;
+    }
+
+    console.warn("No navigation target found:", notification);
   };
 
   const getTypeLabel = (type) => {
@@ -160,12 +187,14 @@ setNotifications(
 
   return (
     <div className="space-y-6">
-      {/* Page Heading */}
+
+      {/* Page heading */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
             Notifications
           </h1>
+
           <p className="mt-1 text-sm text-slate-500">
             View and manage your notifications.
           </p>
@@ -179,14 +208,14 @@ setNotifications(
         </button>
       </div>
 
-      {/* Statistics Component */}
+      {/* Statistics */}
       <NotificationStats
         total={notifications.length}
         unread={unreadCount}
         read={readCount}
       />
 
-      {/* Filters Component */}
+      {/* Filters */}
       <NotificationFilter
         search={search}
         setSearch={setSearch}
@@ -197,8 +226,9 @@ setNotifications(
         notificationTypes={notificationTypes}
       />
 
-      {/* Notification List */}
+      {/* Notification list */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <h2 className="font-semibold text-slate-800">
             All Notifications
