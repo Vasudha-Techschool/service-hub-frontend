@@ -9,6 +9,7 @@ import CustomerSearchPage from "../pages/customer/SearchPage";
 import ProviderDetailsPage from "../pages/customer/ProviderDetailsPage";
 import MyBookings from "../pages/customer/Mybooking";
 import CustomerComplaints from "../pages/customer/CustomerComplaints";
+import CustomerNotifications from "../pages/customer/NotificationPage";
 
 const CustomerRoutes = () => {
   return (
@@ -28,10 +29,15 @@ const CustomerRoutes = () => {
   element={<ProviderDetailsPage />}
 />
 
-<Route
-  path="complaints"
-  element={<CustomerComplaints api={api} />}
-/>
+    <Route
+      path="complaints"
+      element={<CustomerComplaints api={api} />}
+    />
+
+    <Route
+      path="notifications"
+      element={<CustomerNotifications />}
+    />
 
 
         <Route

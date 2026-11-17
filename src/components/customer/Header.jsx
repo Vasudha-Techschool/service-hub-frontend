@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState ,useEffect,useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -11,6 +11,10 @@ import {
   Home,
 } from "lucide-react";
 import { useSelector } from "react-redux";
+import {
+  getCustomerUnreadNotificationCount,
+} from "../../services/customerService";
+
 
 const pageNames = {
   dashboard: "Dashboard",
@@ -32,7 +36,36 @@ export default function CustomerHeader({ onMenuClick }) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const user = useSelector((state) => state.auth.user);
+  const [unreadCount, setUnreadCount] = useState(0);
 
+      const fetchUnreadCount = useCallback(async () => {
+        try {
+          const data = await getCustomerUnreadNotificationCount();
+
+          setUnreadCount(
+            Number(data.unread_count ?? data.count ?? 0)
+          );
+        } catch (error) {
+          console.error("Failed to fetch unread notification count:", error);
+        }
+      }, []);
+
+      useEffect(() => {
+        fetchUnreadCount();
+
+        // Refresh when the notification page marks an item as read.
+        window.addEventListener(
+          "customer-notifications-updated",
+          fetchUnreadCount
+        );
+
+  return () => {
+    window.removeEventListener(
+      "customer-notifications-updated",
+      fetchUnreadCount
+    );
+  };
+}, [fetchUnreadCount]);
   const displayName =
     user?.full_name ||
     user?.name ||
@@ -199,15 +232,19 @@ export default function CustomerHeader({ onMenuClick }) {
         {/* Right: Notifications and customer profile */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-3">
           <button
-            type="button"
-            onClick={() =>
-              navigate("/customer/notifications")
-            }
-            aria-label="View notifications"
-            className="relative rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 hover:text-green-700"
-          >
-            <Bell size={21} />
-          </button>
+  type="button"
+  onClick={() => navigate("/customer/notifications")}
+  aria-label={`View notifications. ${unreadCount} unread`}
+  className="relative rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 hover:text-green-700"
+>
+  <Bell size={21} />
+
+  {unreadCount > 0 && (
+    <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+      {unreadCount > 99 ? "99+" : unreadCount}
+    </span>
+  )}
+</button>
 
           <button
             type="button"

@@ -170,13 +170,12 @@ const ProviderComplaints = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
 
-      {/* Sidebar */}
-      <ProviderSidebar />
+      
 
       {/* Main Content */}
       <div className="flex-1 min-w-0">
 
-        <Header />
+       
 
         <main className="p-4 md:p-6 lg:p-8 space-y-6">
 
