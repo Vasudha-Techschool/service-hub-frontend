@@ -10,6 +10,8 @@ import ProviderDetailsPage from "../pages/customer/ProviderDetailsPage";
 import MyBookings from "../pages/customer/Mybooking";
 import CustomerComplaints from "../pages/customer/CustomerComplaints";
 import CustomerNotifications from "../pages/customer/NotificationPage";
+import MyReviews from "../pages/customer/ReviewPage";
+import MyComplaints from "../pages/customer/ComplaintPage";
 
 const CustomerRoutes = () => {
   return (
@@ -38,6 +40,23 @@ const CustomerRoutes = () => {
       path="notifications"
       element={<CustomerNotifications />}
     />
+
+    <Route
+  path="reviews"
+  element={
+   
+      <MyReviews />
+
+  }
+/>
+
+<Route
+  path="complaints"
+  element={
+      <MyComplaints />
+   
+  }
+/>
 
 
         <Route

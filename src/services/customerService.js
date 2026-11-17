@@ -52,6 +52,25 @@ export const getCustomerUnreadNotificationCount = async () => {
 
 
 
+// Customer's submitted reviews
+export const getMyReviews = async () => {
+  const response = await api.get("/api/feedback/my-reviews/");
+  return response.data;
+};
+
+
+
+
+// Single complaint details
+export const getComplaintDetails = async (complaintId) => {
+  const response = await api.get(
+    `/api/feedback/complaints/${complaintId}/`
+  );
+  return response.data;
+};
+
+
+
 
 
 
