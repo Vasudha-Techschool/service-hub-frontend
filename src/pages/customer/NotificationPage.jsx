@@ -1,5 +1,5 @@
 
-import { useEffect, useState,useCallback  } from "react";
+import { useEffect, useState  } from "react";
 import { Bell, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -63,52 +63,84 @@ const CustomerNotifications = () => {
     return true;
   });
 
-  const handleNotificationClick = async (notification) => {
-    try {
-      if (!notification.is_read) {
-        setUpdatingId(notification.id);
+//   const handleNotificationClick = async (notification) => {
+//     try {
+//       if (!notification.is_read) {
+//         setUpdatingId(notification.id);
 
-        await markNotificationAsRead(notification.id);
+//         await markNotificationAsRead(notification.id);
 
-        setNotifications((previous) =>
-          previous.map((item) =>
-            item.id === notification.id
-              ? { ...item, is_read: true }
-              : item
-          )
-        );
+//         setNotifications((previous) =>
+//           previous.map((item) =>
+//             item.id === notification.id
+//               ? { ...item, is_read: true }
+//               : item
+//           )
+//         );
 
-        await markNotificationAsRead(notification.id);
+//         await markNotificationAsRead(notification.id);
 
-setNotifications((prev) =>
-  prev.map((item) =>
-    item.id === notification.id
-      ? { ...item, is_read: true }
-      : item
-  )
-);
+// setNotifications((prev) =>
+//   prev.map((item) =>
+//     item.id === notification.id
+//       ? { ...item, is_read: true }
+//       : item
+//   )
+// );
 
-window.dispatchEvent(
-  new Event("customer-notifications-updated")
-);
-      }
+// window.dispatchEvent(
+//   new Event("customer-notifications-updated")
+// );
+//       }
 
-      if (notification.service_request) {
-        navigate(
-          `/customer/requests`
-        );
-      } else if (notification.complaint) {
-        navigate(
-          `/customer/complaints`
-        );
-      }
-    } catch (error) {
-      console.error("Notification update failed:", error);
-      setError("Unable to open this notification.");
-    } finally {
-      setUpdatingId(null);
+//       if (notification.service_request) {
+//         navigate(
+//           `/customer/requests`
+//         );
+//       } else if (notification.complaint) {
+//         navigate(
+//           `/customer/complaints`
+//         );
+//       }
+//     } catch (error) {
+//       console.error("Notification update failed:", error);
+//       setError("Unable to open this notification.");
+//     } finally {
+//       setUpdatingId(null);
+//     }
+//   };
+const handleNotificationClick = async (notification) => {
+  try {
+    if (!notification.is_read) {
+      setUpdatingId(notification.id);
+
+      await markNotificationAsRead(notification.id);
+
+      setNotifications((previous) =>
+        previous.map((item) =>
+          item.id === notification.id
+            ? { ...item, is_read: true }
+            : item
+        )
+      );
+
+      window.dispatchEvent(
+        new Event("customer-notifications-updated")
+      );
     }
-  };
+
+    if (notification.service_request) {
+      navigate("/customer/requests");
+    } else if (notification.complaint) {
+      navigate("/customer/complaints");
+    }
+  } catch (error) {
+    console.error("Notification update failed:", error);
+    setError("Unable to open this notification.");
+  } finally {
+    setUpdatingId(null);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50">

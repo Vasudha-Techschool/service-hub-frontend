@@ -1,6 +1,7 @@
 
-import { useState ,useEffect,useCallback } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
 import {
   Menu,
   Bell,
@@ -10,11 +11,9 @@ import {
   ChevronRight,
   Home,
 } from "lucide-react";
-import { useSelector } from "react-redux";
-import {
-  getCustomerUnreadNotificationCount,
-} from "../../services/customerService";
 
+import { useSelector } from "react-redux";
+import { useNotifications } from "../../context/NotificationContext";
 
 const pageNames = {
   dashboard: "Dashboard",
@@ -36,36 +35,10 @@ export default function CustomerHeader({ onMenuClick }) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const user = useSelector((state) => state.auth.user);
-  const [unreadCount, setUnreadCount] = useState(0);
 
-      const fetchUnreadCount = useCallback(async () => {
-        try {
-          const data = await getCustomerUnreadNotificationCount();
+  // Shared notification state
+  const { unreadCount, connectionStatus } = useNotifications();
 
-          setUnreadCount(
-            Number(data.unread_count ?? data.count ?? 0)
-          );
-        } catch (error) {
-          console.error("Failed to fetch unread notification count:", error);
-        }
-      }, []);
-
-      useEffect(() => {
-        fetchUnreadCount();
-
-        // Refresh when the notification page marks an item as read.
-        window.addEventListener(
-          "customer-notifications-updated",
-          fetchUnreadCount
-        );
-
-  return () => {
-    window.removeEventListener(
-      "customer-notifications-updated",
-      fetchUnreadCount
-    );
-  };
-}, [fetchUnreadCount]);
   const displayName =
     user?.full_name ||
     user?.name ||
@@ -80,14 +53,13 @@ export default function CustomerHeader({ onMenuClick }) {
   const currentRoute =
     pathParts[pathParts.length - 1] || "dashboard";
 
-  // Detect /customer/providers/:id without using the ID as a title.
+  // Detect /customer/providers/:id
   const isProviderDetails =
     pathParts.length === 3 &&
     pathParts[0] === "customer" &&
     pathParts[1] === "providers" &&
     /^\d+$/.test(pathParts[2]);
 
-  // Detect other provider routes if needed.
   const isProviderRoute =
     pathParts[0] === "customer" &&
     pathParts[1] === "providers";
@@ -124,8 +96,10 @@ export default function CustomerHeader({ onMenuClick }) {
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
       <div className="flex h-16 items-center gap-3 px-3 sm:px-6">
+
         {/* Left: Menu and page title */}
         <div className="flex min-w-0 shrink-0 items-center gap-3">
+
           <button
             type="button"
             onClick={onMenuClick}
@@ -200,6 +174,7 @@ export default function CustomerHeader({ onMenuClick }) {
           className="mx-auto flex min-w-0 max-w-md flex-1 items-center"
         >
           <div className="flex w-full items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 transition focus-within:border-green-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-100">
+
             <Search
               size={18}
               className="shrink-0 text-gray-400"
@@ -231,24 +206,45 @@ export default function CustomerHeader({ onMenuClick }) {
 
         {/* Right: Notifications and customer profile */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-3">
-          <button
-  type="button"
-  onClick={() => navigate("/customer/notifications")}
-  aria-label={`View notifications. ${unreadCount} unread`}
-  className="relative rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 hover:text-green-700"
->
-  <Bell size={21} />
 
-  {unreadCount > 0 && (
-    <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-      {unreadCount > 99 ? "99+" : unreadCount}
-    </span>
-  )}
-</button>
-
+          {/* Notification Bell */}
           <button
             type="button"
-            onClick={() => navigate("/customer/profile")}
+            onClick={() =>
+              navigate("/customer/notifications")
+            }
+            aria-label={`View notifications. ${unreadCount} unread`}
+            className="relative rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 hover:text-green-700"
+          >
+            <Bell size={21} />
+
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* Connection Status */}
+          <span
+            className={`h-2 w-2 rounded-full ${
+              connectionStatus === "connected"
+                ? "bg-green-500"
+                : "bg-gray-300"
+            }`}
+            title={
+              connectionStatus === "connected"
+                ? "Real-time notifications connected"
+                : "Real-time notifications disconnected"
+            }
+          />
+
+          {/* Customer Profile */}
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/customer/profile")
+            }
             aria-label="Open customer profile"
             className="flex items-center gap-2 rounded-lg p-1.5 transition hover:bg-gray-50"
           >
@@ -260,6 +256,7 @@ export default function CustomerHeader({ onMenuClick }) {
               {displayName}
             </span>
           </button>
+
         </div>
       </div>
     </header>

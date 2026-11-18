@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
 import {
   Menu,
   Bell,
@@ -9,8 +11,9 @@ import {
   ChevronRight,
   Home,
 } from "lucide-react";
+
 import { useSelector } from "react-redux";
-import { getProviderUnreadNotificationCount } from "../../services/providerService";
+import { useNotifications } from "../../context/NotificationContext";
 
 const pageNames = {
   dashboard: "Dashboard",
@@ -31,6 +34,9 @@ export default function ProviderHeader({ onMenuClick }) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const user = useSelector((state) => state.auth.user);
+
+  // Shared notification state
+  const { unreadCount, connectionStatus } = useNotifications();
 
   const displayName =
     user?.full_name ||
@@ -58,43 +64,6 @@ export default function ProviderHeader({ onMenuClick }) {
       currentRoute
         .replace(/-/g, " ")
         .replace(/\b\w/g, (char) => char.toUpperCase());
-const [unreadCount, setUnreadCount] = useState(0);
-
-
-const fetchUnreadCount = useCallback(async () => {
-  try {
-    const data = await getProviderUnreadNotificationCount();
-
-    setUnreadCount(
-      Number(data.unread_count ?? data.count ?? 0)
-    );
-  } catch (error) {
-    console.error("Failed to fetch unread notifications:", error);
-  }
-}, []);
-
-useEffect(() => {
-  fetchUnreadCount();
-}, [fetchUnreadCount, location.pathname]);
-
-// Listen for notifications marked as read
-useEffect(() => {
-  const handleNotificationUpdate = () => {
-    fetchUnreadCount();
-  };
-
-  window.addEventListener(
-    "provider-notifications-updated",
-    handleNotificationUpdate
-  );
-
-  return () => {
-    window.removeEventListener(
-      "provider-notifications-updated",
-      handleNotificationUpdate
-    );
-  };
-}, [fetchUnreadCount]);
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -118,6 +87,7 @@ useEffect(() => {
 
         {/* Left: Menu and Page Title */}
         <div className="flex min-w-0 shrink-0 items-center gap-3">
+
           <button
             type="button"
             onClick={onMenuClick}
@@ -148,7 +118,10 @@ useEffect(() => {
 
               {currentRoute !== "dashboard" && (
                 <>
-                  <ChevronRight size={13} className="shrink-0" />
+                  <ChevronRight
+                    size={13}
+                    className="shrink-0"
+                  />
 
                   <span className="truncate font-medium text-gray-700">
                     {pageTitle}
@@ -165,7 +138,11 @@ useEffect(() => {
           className="mx-auto flex min-w-0 max-w-md flex-1 items-center"
         >
           <div className="flex w-full items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 transition focus-within:border-green-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-100">
-            <Search size={18} className="shrink-0 text-gray-400" />
+
+            <Search
+              size={18}
+              className="shrink-0 text-gray-400"
+            />
 
             <input
               type="search"
@@ -193,24 +170,45 @@ useEffect(() => {
 
         {/* Right: Notifications and Profile */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-3">
-          <button
-  type="button"
-  onClick={() => navigate("/provider/notifications")}
-  aria-label={`View notifications. ${unreadCount} unread`}
-  className="relative rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 hover:text-green-700"
->
-  <Bell size={21} />
 
-  {unreadCount > 0 && (
-    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-      {unreadCount > 99 ? "99+" : unreadCount}
-    </span>
-  )}
-</button>
-
+          {/* Notification Bell */}
           <button
             type="button"
-            onClick={() => navigate("/provider/profile")}
+            onClick={() =>
+              navigate("/provider/notifications")
+            }
+            aria-label={`View notifications. ${unreadCount} unread`}
+            className="relative rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 hover:text-green-700"
+          >
+            <Bell size={21} />
+
+            {unreadCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* WebSocket Connection Status */}
+          <span
+            className={`h-2 w-2 rounded-full ${
+              connectionStatus === "connected"
+                ? "bg-green-500"
+                : "bg-gray-300"
+            }`}
+            title={
+              connectionStatus === "connected"
+                ? "Real-time notifications connected"
+                : "Real-time notifications disconnected"
+            }
+          />
+
+          {/* Provider Profile */}
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/provider/profile")
+            }
             aria-label="Open provider profile"
             className="flex items-center gap-2 rounded-lg p-1.5 transition hover:bg-gray-50"
           >
@@ -222,6 +220,7 @@ useEffect(() => {
               {displayName}
             </span>
           </button>
+
         </div>
       </div>
     </header>
